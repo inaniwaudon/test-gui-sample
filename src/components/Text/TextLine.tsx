@@ -29,10 +29,13 @@ const CursorFlicker = keyframes`
   }
 `;
 
-const SvgText = styled.text<{ vertical: boolean }>`
-  font-family: "FOT-筑紫明朝 Pr6 B";
-  writing-mode: ${({ vertical }) => (vertical ? "tb" : "lr")};
+const SvgText = styled.text`
   user-select: none;
+`;
+
+const SvgChar = styled.tspan<{ font: "mincho" | "gothic" }>`
+  font-family: ${({ font }) =>
+    font === "mincho" ? "FOT-筑紫明朝 Pr6 B" : "FOT-筑紫ゴシック Pro H"};
 `;
 
 const Selection = styled.rect<{ isCursor: boolean }>`
@@ -51,7 +54,6 @@ interface TextLineProps {
   height: number;
   selection?: Range<TextIndex>;
   textIndex: TextIndex;
-  vertical: boolean;
 }
 
 const TextLine = ({
@@ -60,12 +62,10 @@ const TextLine = ({
   height,
   selection,
   textIndex,
-  vertical,
 }: TextLineProps) => {
   const itemRects = calculateItemRects(line);
   const itemPositions = itemRects.map((rect) => rect.x);
   const cursorWidth = 2;
-  const verticalLeft = position - height;
 
   const selectionRect: Rect | undefined = (() => {
     if (!selection) {
@@ -87,10 +87,10 @@ const TextLine = ({
     if (itemRects.length === 0) {
       if (isCollapsed) {
         return {
-          x: vertical ? verticalLeft : 0,
-          y: vertical ? 0 : position,
-          w: vertical ? line.fontSize : cursorWidth,
-          h: vertical ? cursorWidth : line.fontSize,
+          x: 0,
+          y: position,
+          w: cursorWidth,
+          h: line.fontSize,
         };
       }
       return;
@@ -114,19 +114,15 @@ const TextLine = ({
         : itemRects.at(-1)!.x + itemRects.at(-1)!.w;
     const width = isCollapsed ? cursorWidth : toX - fromX;
     return {
-      x: vertical ? verticalLeft : fromX,
-      y: vertical ? fromX : position,
-      w: vertical ? line.fontSize : width,
-      h: vertical ? width : line.fontSize,
+      x: fromX,
+      y: position,
+      w: width,
+      h: line.fontSize,
     };
   })();
 
-  const textX = vertical
-    ? position - height / 2
-    : itemPositions.map((position) => position).join(",");
-  const textY = vertical
-    ? itemPositions.map((position) => position).join(",")
-    : position + line.fontSize * 0.88;
+  const textX = itemPositions.map((position) => position).join(",");
+  const textY = position + line.fontSize * 0.88;
 
   return (
     <>
@@ -140,15 +136,12 @@ const TextLine = ({
         />
       )}
       {
-        <SvgText
-          fontSize={line.fontSize}
-          vertical={vertical}
-          x={textX}
-          y={textY}
-        >
-          {line.items
-            .flatMap((item) => (item.type === "char" ? item.content : []))
-            .join("")}
+        <SvgText fontSize={line.fontSize} x={textX} y={textY}>
+          {line.items.map((char, index) => (
+            <SvgChar font={char.font} key={index}>
+              {char.content}
+            </SvgChar>
+          ))}
         </SvgText>
       }
     </>

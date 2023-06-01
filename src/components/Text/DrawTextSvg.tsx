@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import TextBox from "./TextBox";
-import { Point, Range, Size } from "@/lib/figure";
+import { Range, Size } from "@/lib/figure";
 import { TextIndex } from "@/lib/text/selection";
 import { TextObj } from "@/lib/text/text";
 

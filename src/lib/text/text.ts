@@ -5,14 +5,8 @@ export interface Char {
   type: "char";
   content: string;
   kerning: number;
-  background?: string;
+  font: "mincho" | "gothic";
 }
-
-export interface TabItem {
-  type: "tab";
-}
-
-type TextItem = Char | TabItem;
 
 export interface LineHeight {
   number: number;
@@ -20,7 +14,7 @@ export interface LineHeight {
 }
 
 export interface Line {
-  items: TextItem[];
+  items: Char[];
   fontSize: number;
   lineHeight: LineHeight;
 }
@@ -30,7 +24,6 @@ export interface TextObj {
   position: Point;
   lines: Line[];
   tabs: Tab[];
-  writingMode: "horizontal" | "vertical";
 }
 
 export interface Tab {
@@ -38,37 +31,33 @@ export interface Tab {
   align: "left" | "right" | "center" | "justify";
 }
 
-const textToItems = (text: string): TextItem[] =>
-  text.split("").map((char) =>
-    char === "\t"
-      ? { type: "tab" }
-      : {
-          type: "char",
-          content: char,
-          kerning: 0,
-        }
-  );
+const textToChars = (text: string): Char[] =>
+  text.split("").map((char) => ({
+    type: "char",
+    content: char,
+    kerning: 0,
+    font: "mincho",
+  }));
 
 export const textToLines = (text: string): Line[] =>
   text.split("\n").map((line) => ({
-    items: textToItems(line),
-    fontSize: 60,
+    items: textToChars(line),
+    fontSize: 120,
     lineHeight: {
-      number: 80,
+      number: 160,
       unit: "fixed",
     },
   }));
 
 export const createDefaultText = (): TextObj => ({
   type: "text",
-  position: { x: 40, y: 40 },
+  position: { x: 60, y: 60 },
   lines: textToLines("テキストを入力"),
   tabs: [
     { x: 10, align: "left" },
     { x: 100, align: "center" },
     { x: 200, align: "right" },
   ],
-  writingMode: "horizontal",
 });
 
 export const getCharLeft = (index: number, rects: Rect[]) =>
@@ -98,9 +87,28 @@ export const setKerning = (
 
     for (let itemi = fromItemi; itemi <= toItemi; itemi++) {
       const item = text.lines[linei].items[itemi];
-      if (item.type === "char") {
-        item.kerning += delta;
-      }
+      item.kerning += delta;
+    }
+  }
+};
+
+export const setBold = (text: TextObj, selection: Range<TextIndex>) => {
+  const sortedSelection = sortSelection(selection);
+  for (
+    let linei = sortedSelection.from.line;
+    linei <= sortedSelection.to.line;
+    linei++
+  ) {
+    const fromItemi =
+      linei === sortedSelection.from.line ? sortedSelection.from.item : 0;
+    const toItemi =
+      linei === sortedSelection.to.line
+        ? sortedSelection.to.item
+        : text.lines[linei].items.length - 1;
+
+    for (let itemi = fromItemi; itemi < toItemi; itemi++) {
+      const item = text.lines[linei].items[itemi];
+      item.font = "gothic";
     }
   }
 };
@@ -114,7 +122,7 @@ export const addCharsToText = (
   const line = text.lines[selection.from.line];
   text.lines[selection.from.line].items = [
     ...line.items.slice(0, sortedSelection.from.item),
-    ...textToItems(value),
+    ...textToChars(value),
     ...line.items.slice(sortedSelection.to.item),
   ];
   const index = {

@@ -2,7 +2,6 @@ import { Rect } from "../figure";
 import { getCharWidth } from "./metrics";
 import { Line, LineHeight, TextObj } from "./text";
 
-// It is on the basis of horizontal direction.
 export const calculateItemRects = (line: Line): Rect[] => {
   let x = 0;
   const rects: Rect[] = [];
@@ -22,7 +21,6 @@ const getLineHeight = (lineHeight: LineHeight, fontSize: number) =>
     ? lineHeight.number
     : lineHeight.number * fontSize;
 
-// It is on the basis of horizontal direction.
 export const calculateLineRects = (text: TextObj) => {
   const rects: Rect[] = [];
   let y = 0;
@@ -40,22 +38,13 @@ export const calculateLineRects = (text: TextObj) => {
   return rects;
 };
 
-// 縦書き・横書きに対応
-// 縦書きの場合も左上を原点とする
 export const calculateTextBoundingBox = (text: TextObj): Rect => {
   const lineRects = calculateLineRects(text);
   const height = Math.max(...lineRects.map((rect) => rect.y + rect.h));
   const width = Math.max(...lineRects.map((rect) => rect.w));
-  return text.writingMode === "horizontal"
-    ? {
-        ...text.position,
-        w: width,
-        h: height,
-      }
-    : {
-        x: text.position.x - height,
-        y: text.position.y,
-        w: height,
-        h: width,
-      };
+  return {
+    ...text.position,
+    w: width,
+    h: height,
+  };
 };

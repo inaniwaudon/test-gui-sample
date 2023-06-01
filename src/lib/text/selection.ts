@@ -34,14 +34,14 @@ const isTailTextIndex = (index: TextIndex, text: TextObj) =>
   equalsTextIndex(index, getTailTextIndex(text));
 
 export const backTextIndex = (index: TextIndex, text: TextObj): TextIndex => {
-  // 行内
+  // inside the line
   if (index.item > 0) {
     return {
       ...index,
       item: index.item - 1,
     };
   }
-  // 前行
+  // before the line
   if (index.line > 0) {
     return {
       line: index.line - 1,
@@ -52,14 +52,14 @@ export const backTextIndex = (index: TextIndex, text: TextObj): TextIndex => {
 };
 
 export const nextTextIndex = (index: TextIndex, text: TextObj): TextIndex => {
-  // 行内
+  // inside the line
   if (index.item < text.lines[index.line].items.length) {
     return {
       ...index,
       item: index.item + 1,
     };
   }
-  // 次行
+  // before the line
   if (index.line < text.lines.length - 1) {
     return {
       line: index.line + 1,
@@ -81,23 +81,19 @@ const getItemIndex = (line: Line, point: number) => {
 };
 
 const getTextIndex = (text: TextObj, point: Point) => {
-  const isVertical = text.writingMode === "vertical";
   const relativePoint: Point = {
     x: point.x - text.position.x,
     y: point.y - text.position.y,
   };
-  const x = isVertical ? relativePoint.y : relativePoint.x;
-  const y = isVertical ? relativePoint.x : relativePoint.y;
+  const x = relativePoint.x;
+  const y = relativePoint.y;
   const lineRects = calculateLineRects(text);
 
   for (let linei = 0; linei < text.lines.length; linei++) {
     const line = text.lines[linei];
     if (
-      isVertical
-        ? y <= -lineRects[linei].y &&
-          -lineRects[linei].y - lineRects[linei].h <= y
-        : lineRects[linei].y <= y &&
-          y <= lineRects[linei].y + lineRects[linei].h
+      lineRects[linei].y <= y &&
+      y <= lineRects[linei].y + lineRects[linei].h
     ) {
       const itemIndex = getItemIndex(line, x);
       if (itemIndex !== undefined) {

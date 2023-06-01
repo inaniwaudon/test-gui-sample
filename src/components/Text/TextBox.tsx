@@ -21,18 +21,13 @@ interface TextBoxProps {
 
 const TextBox = ({ text, selection }: TextBoxProps) => {
   const boundingBox = calculateTextBoundingBox(text);
-  const isVertical = text.writingMode === "vertical";
-  const x = text.position.x - (isVertical ? boundingBox.w : 0);
+  const x = text.position.x;
   const lineRects = calculateLineRects(text);
-  const linePositions = lineRects.map((rect) =>
-    isVertical ? boundingBox.w - rect.y : rect.y
-  );
+  const linePositions = lineRects.map((rect) => rect.y);
 
   return (
     <g transform={`translate(${x}, ${text.position.y})`}>
-      {true && (
-        <Bounding x={0} y={0} width={boundingBox.w} height={boundingBox.h} />
-      )}
+      <Bounding x={0} y={0} width={boundingBox.w} height={boundingBox.h} />
       {text.lines.map((line, lineIndex) => {
         const textIndex = {
           line: lineIndex,
@@ -45,7 +40,6 @@ const TextBox = ({ text, selection }: TextBoxProps) => {
             height={lineRects[lineIndex].h}
             selection={selection}
             textIndex={textIndex}
-            vertical={text.writingMode === "vertical"}
             key={lineIndex}
           />
         );

@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
 import styled from "styled-components";
 import DrawTextSvg from "./Text/DrawTextSvg";
-import { Point, Range, rectContainsPoint } from "@/lib/figure";
+import { Point, Range } from "@/lib/figure";
 import { useKey } from "@/lib/useKey";
 import { useWindowSize } from "@/lib/useWindowSize";
 import {
-  TextIndex,
   backTextIndex,
   getHeadTextIndex,
   getTailTextIndex,
@@ -14,15 +13,17 @@ import {
   isCollapsedSelection,
   moveSelection,
   sortSelection,
+  TextIndex,
 } from "@/lib/text/selection";
 import {
-  TextObj,
   addCharsToText,
   breakLineText,
   createDefaultText,
   deleteCharsFromText,
   getCharLeft,
+  setBold,
   setKerning,
+  TextObj,
 } from "@/lib/text/text";
 import { calculateItemRects, calculateLineRects } from "@/lib/text/typeset";
 
@@ -117,38 +118,43 @@ const RichEditor = () => {
   };
 
   const deleteChars = () => {
-    if (!selection) {
-      return;
+    if (selection) {
+      const newText = structuredClone(text);
+      const deletedSelection = sortSelection(structuredClone(selection));
+      if (isCollapsedSelection(selection)) {
+        deletedSelection.from = backTextIndex(deletedSelection.from, text);
+      }
+      const newSelection = deleteCharsFromText(newText, deletedSelection);
+      updateSelection(newSelection, newText);
+      setText(newText);
+      refocus(newText, newSelection);
     }
-    const newText = structuredClone(text);
-    const deletedSelection = sortSelection(structuredClone(selection));
-    if (isCollapsedSelection(selection)) {
-      deletedSelection.from = backTextIndex(deletedSelection.from, text);
-    }
-    const newSelection = deleteCharsFromText(newText, deletedSelection);
-    updateSelection(newSelection, newText);
-    setText(newText);
-    refocus(newText, newSelection);
   };
 
   const breakLine = () => {
-    if (!selection) {
-      return;
+    if (selection) {
+      const newText = structuredClone(text);
+      const newSelection = breakLineText(newText, selection.from);
+      updateSelection(newSelection, newText);
+      setText(newText);
+      refocus(newText, newSelection);
     }
-    const newText = structuredClone(text);
-    const newSelection = breakLineText(newText, selection.from);
-    updateSelection(newSelection, newText);
-    setText(newText);
-    refocus(newText, newSelection);
   };
 
   const updateKerning = (delta: number) => {
-    if (!selection) {
-      return;
+    if (selection) {
+      const newText = structuredClone(text);
+      setKerning(newText, delta, selection);
+      setText(newText);
     }
-    const newText = structuredClone(text);
-    setKerning(newText, delta, selection);
-    setText(newText);
+  };
+
+  const updateBold = () => {
+    if (selection) {
+      const newText = structuredClone(text);
+      setBold(newText, selection);
+      setText(newText);
+    }
   };
 
   // mouse event
@@ -239,18 +245,7 @@ const RichEditor = () => {
     if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = text.writingMode === "vertical";
-    if (e.altKey && isVertical) {
-      updateKerning(-10);
-      e.preventDefault();
-      return;
-    }
-    const newSelection = moveSelection(
-      selection,
-      isVertical ? "left" : "top",
-      e.shiftKey,
-      text
-    );
+    const newSelection = moveSelection(selection, "top", e.shiftKey, text);
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
@@ -259,18 +254,7 @@ const RichEditor = () => {
     if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = text.writingMode === "vertical";
-    if (e.altKey && isVertical) {
-      updateKerning(10);
-      e.preventDefault();
-      return;
-    }
-    const newSelection = moveSelection(
-      selection,
-      isVertical ? "right" : "bottom",
-      e.shiftKey,
-      text
-    );
+    const newSelection = moveSelection(selection, "bottom", e.shiftKey, text);
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
@@ -279,18 +263,12 @@ const RichEditor = () => {
     if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = text.writingMode === "vertical";
-    if (e.altKey && !isVertical) {
-      updateKerning(-10);
+    if (e.altKey) {
+      updateKerning(-50);
       e.preventDefault();
       return;
     }
-    const newSelection = moveSelection(
-      selection,
-      isVertical ? "bottom" : "left",
-      e.shiftKey,
-      text
-    );
+    const newSelection = moveSelection(selection, "left", e.shiftKey, text);
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
@@ -299,18 +277,12 @@ const RichEditor = () => {
     if (inputValue.length > 0 || !selection || !text) {
       return;
     }
-    const isVertical = text.writingMode === "vertical";
-    if (e.altKey && !isVertical) {
-      updateKerning(10);
+    if (e.altKey) {
+      updateKerning(50);
       e.preventDefault();
       return;
     }
-    const newSelection = moveSelection(
-      selection,
-      isVertical ? "top" : "right",
-      e.shiftKey,
-      text
-    );
+    const newSelection = moveSelection(selection, "right", e.shiftKey, text);
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
@@ -318,6 +290,12 @@ const RichEditor = () => {
   useKey("Enter", (e) => {
     if (selection && !e.isComposing) {
       breakLine();
+    }
+  });
+
+  useKey("b", (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      updateBold();
     }
   });
 
