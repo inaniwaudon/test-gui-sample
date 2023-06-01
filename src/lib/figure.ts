@@ -26,10 +26,10 @@ export type Direction = "top" | "left" | "bottom" | "right";
 export type Range<T> = { from: T; to: T };
 
 export const rectContainsPoint = (rect: Rect, point: Point) =>
-  rect.x <= point.x &&
-  point.x <= rect.x + rect.w &&
-  rect.y <= point.y &&
-  point.y <= rect.y + rect.h;
+  ((rect.w >= 0 && rect.x <= point.x && point.x <= rect.x + rect.w) ||
+    (rect.w < 0 && rect.x + rect.w <= point.x && point.x <= rect.x)) &&
+  ((rect.h >= 0 && rect.y <= point.y && point.y <= rect.y + rect.h) ||
+    (rect.h < 0 && rect.y + rect.h <= point.y && point.y <= rect.y));
 
 export const circleContainsPoint = (circle: Circle, point: Point) =>
   getDistance(circle, point) <= circle.r;
