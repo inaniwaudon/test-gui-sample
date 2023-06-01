@@ -1,4 +1,4 @@
-import React from "react";
+import Bezier from "./Bezier";
 import BoundingBox from "./BoundingBox";
 import styled, { createGlobalStyle } from "styled-components";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
@@ -36,6 +36,7 @@ const App = () => {
         <DisplayArea>
           <Routes>
             <Route path="/bbox" element={<BoundingBox />} />
+            <Route path="/bezier" element={<Bezier />} />
           </Routes>
         </DisplayArea>
       </BrowserRouter>
