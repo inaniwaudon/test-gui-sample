@@ -6,13 +6,13 @@ import {
   circleContainsPoint,
   getDistance,
   rectContainsPoint,
-} from "./lib/figure";
+} from "../lib/figure";
 import {
   commandsToPathD,
   PointType,
   rescaleCommands,
   scaleCommands,
-} from "./lib/bezier";
+} from "../lib/bezier";
 
 const Path = styled.path<{ editing: boolean }>`
   fill: ${({ editing }) => (editing ? "none" : "#000")};

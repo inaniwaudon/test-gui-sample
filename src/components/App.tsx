@@ -1,7 +1,7 @@
-import Bezier from "./Bezier";
-import BoundingBox from "./BoundingBox";
 import styled, { createGlobalStyle } from "styled-components";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import Bezier from "./Bezier";
+import BoundingBox from "./BoundingBox";
 
 const GlobalStyle = createGlobalStyle`
 html, body {

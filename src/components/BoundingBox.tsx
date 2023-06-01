@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import styled from "styled-components";
-import { Point, Rect, rectContainsPoint } from "./lib/figure";
+import { Point, Rect, rectContainsPoint } from "../lib/figure";
 
 const rectSize = 8;
 
