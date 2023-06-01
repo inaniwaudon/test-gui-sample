@@ -16,6 +16,15 @@ export interface Circle {
   r: number;
 }
 
+export interface Size {
+  w: number;
+  h: number;
+}
+
+export type Direction = "top" | "left" | "bottom" | "right";
+
+export type Range<T> = { from: T; to: T };
+
 export const rectContainsPoint = (rect: Rect, point: Point) =>
   rect.x <= point.x &&
   point.x <= rect.x + rect.w &&

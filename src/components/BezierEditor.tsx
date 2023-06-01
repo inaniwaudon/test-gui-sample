@@ -13,6 +13,7 @@ import {
   rescaleCommands,
   scaleCommands,
 } from "../lib/bezier";
+import { useWindowSize } from "../lib/useWindowSize";
 
 const Path = styled.path<{ editing: boolean }>`
   fill: ${({ editing }) => (editing ? "none" : "#000")};
@@ -77,13 +78,7 @@ const BezierEditor = ({
   };
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const [screenSize, setScreenSize] = useState<{
-    width: number;
-    height: number;
-  }>({
-    width: 0,
-    height: 0,
-  });
+  const windowSize = useWindowSize();
   const [overedPoint, setOveredPoint] = useState<{
     index: number;
     type: PointType;
@@ -286,15 +281,11 @@ const BezierEditor = ({
     setDownedPoint(undefined);
   };
 
-  useEffect(() => {
-    setScreenSize({ width: window.innerWidth, height: window.innerHeight });
-  }, []);
-
   return (
     <>
       <svg
-        width={screenSize.width}
-        height={screenSize.height}
+        width={windowSize.w}
+        height={windowSize.h}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}

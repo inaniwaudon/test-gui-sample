@@ -2,6 +2,7 @@ import styled, { createGlobalStyle } from "styled-components";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import Bezier from "./Bezier";
 import BoundingBox from "./BoundingBox";
+import RichEditor from "./RichEditor";
 
 const GlobalStyle = createGlobalStyle`
 html, body {
@@ -10,12 +11,17 @@ html, body {
 }
 `;
 
-const Navigation = styled.nav`
+const Header = styled.header`
   height: 40px;
   line-height: 40px;
   margin: 0 20px;
   padding: 0 20px;
   border-bottom: solid 1px #ccc;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const Navigation = styled.nav`
   display: flex;
   gap: 40px;
 `;
@@ -29,14 +35,21 @@ const App = () => {
     <>
       <BrowserRouter>
         <GlobalStyle />
-        <Navigation>
-          <Link to="/bbox">bbox</Link>
-          <Link to="/bezier">bezier</Link>
-        </Navigation>
+        <Header>
+          <Navigation>
+            <Link to="/bbox">bbox</Link>
+            <Link to="/bezier">bezier</Link>
+            <Link to="/richeditor">richeditor</Link>
+          </Navigation>
+          <a href="https://github.com/inaniwaudon/test-gui-sample">
+            View the source code on GitHub
+          </a>
+        </Header>
         <DisplayArea>
           <Routes>
             <Route path="/bbox" element={<BoundingBox />} />
             <Route path="/bezier" element={<Bezier />} />
+            <Route path="/richeditor" element={<RichEditor />} />
           </Routes>
         </DisplayArea>
       </BrowserRouter>
