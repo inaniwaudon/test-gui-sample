@@ -1,4 +1,4 @@
-import { Direction, Point, Range, Rect } from "./figure";
+import { Direction, Point, Range, Rect } from "../figure";
 import { getCharLeft, Line, TextObj } from "./text";
 import { calculateItemRects, calculateLineRects } from "./typeset";
 

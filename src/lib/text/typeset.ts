@@ -1,4 +1,4 @@
-import { Rect } from "./figure";
+import { Rect } from "../figure";
 import { getCharWidth } from "./metrics";
 import { Line, LineHeight, TextObj } from "./text";
 

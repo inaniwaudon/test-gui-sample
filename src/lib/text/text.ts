@@ -1,4 +1,4 @@
-import { Point, Range, Rect } from "./figure";
+import { Point, Range, Rect } from "../figure";
 import { nextTextIndex, sortSelection, TextIndex } from "./selection";
 
 export interface Char {
@@ -61,7 +61,7 @@ export const textToLines = (text: string): Line[] =>
 
 export const createDefaultText = (): TextObj => ({
   type: "text",
-  position: { x: 0, y: 0 },
+  position: { x: 40, y: 40 },
   lines: textToLines("テキストを入力"),
   tabs: [
     { x: 10, align: "left" },

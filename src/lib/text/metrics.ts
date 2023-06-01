@@ -11,7 +11,6 @@ const calculateCharWidth = (char: string) => {
     return 0;
   }
   const svgText = document.getElementById("text-measurement");
-  console.log(svgText);
   if (!svgText) {
     return 0;
   }

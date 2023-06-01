@@ -1,16 +1,30 @@
 import { useRef, useState } from "react";
 import styled from "styled-components";
-import DrawTextSvg from "./DrawTextSvg";
-import { Point, Range } from "../lib/figure";
-import { useKey } from "../lib/useKey";
-import { useWindowSize } from "../lib/useWindowSize";
-import { TextObj, createDefaultText, getCharLeft } from "../lib/text";
+import DrawTextSvg from "./Text/DrawTextSvg";
+import { Point, Range, rectContainsPoint } from "@/lib/figure";
+import { useKey } from "@/lib/useKey";
+import { useWindowSize } from "@/lib/useWindowSize";
 import {
   TextIndex,
+  backTextIndex,
   getHeadTextIndex,
   getTailTextIndex,
+  getTextSelection,
+  isAllSelection,
+  isCollapsedSelection,
+  moveSelection,
   sortSelection,
-} from "../lib/selection";
+} from "@/lib/text/selection";
+import {
+  TextObj,
+  addCharsToText,
+  breakLineText,
+  createDefaultText,
+  deleteCharsFromText,
+  getCharLeft,
+  setKerning,
+} from "@/lib/text/text";
+import { calculateItemRects, calculateLineRects } from "@/lib/text/typeset";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -37,8 +51,8 @@ const Input = styled.input`
 `;
 
 const RichEditor = () => {
-  const origin: Point = { x: 40, y: 30 };
   const windowSize = useWindowSize();
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [text, setText] = useState<TextObj>(createDefaultText());
 
@@ -53,11 +67,8 @@ const RichEditor = () => {
   const [selection, setSelection] = useState<Range<TextIndex>>();
   const [mouseDownPoint, setMouseDownPoint] = useState<Point>();
   const [mouseDownTime, setMouseDownTime] = useState<number>();
-  const [action, setAction] = useState<"move" | "edit">();
-  const [initialText, setInitialText] = useState<TextObj>();
 
-  // 文字の選択
-  /*const updateSelection = (
+  const updateSelection = (
     newSelection?: Range<TextIndex>,
     newText?: TextObj
   ) => {
@@ -66,18 +77,18 @@ const RichEditor = () => {
       return;
     }
 
-    // input の位置を更新
+    // update the input position
     const sortedSelection = sortSelection(newSelection);
-    const linePosition = calculateLineRects(text);
-    const line = text.lines[sortedSelection.from.line];
+    const linePosition = calculateLineRects(newText ?? text);
+    const line = (newText ?? text).lines[sortedSelection.from.line];
     const itemRects = calculateItemRects(line);
     const x =
       text.position.x + getCharLeft(sortedSelection.from.item, itemRects);
     const y = linePosition[sortedSelection.from.line].y + text.position.y;
     setInputPoint({ x, y });
-  };*/
+  };
 
-  /*const selectAll = () => {
+  const selectAll = () => {
     updateSelection({
       from: getHeadTextIndex(),
       to: getTailTextIndex(text),
@@ -88,9 +99,9 @@ const RichEditor = () => {
     setInputValue("");
     setInputInitialText(newText ?? text);
     setInputInitialSelection(newSelection ?? selection);
-  };*/
+  };
 
-  /*const onFocus = () => {
+  const onFocus = () => {
     refocus();
   };
 
@@ -100,8 +111,8 @@ const RichEditor = () => {
     }
     const newText = structuredClone(inputInitialText);
     const newSelection = addCharsToText(newText, value, inputInitialSelection);
-    setSelectedText(newText);
     setSelection(newSelection);
+    setText(newText);
     return { text: newText, selection: newSelection };
   };
 
@@ -112,14 +123,11 @@ const RichEditor = () => {
     const newText = structuredClone(text);
     const deletedSelection = sortSelection(structuredClone(selection));
     if (isCollapsedSelection(selection)) {
-      deletedSelection.from = backTextIndex(
-        deletedSelection.from,
-        selectedText
-      );
+      deletedSelection.from = backTextIndex(deletedSelection.from, text);
     }
     const newSelection = deleteCharsFromText(newText, deletedSelection);
-    setSelectedText(newText);
     updateSelection(newSelection, newText);
+    setText(newText);
     refocus(newText, newSelection);
   };
 
@@ -129,8 +137,8 @@ const RichEditor = () => {
     }
     const newText = structuredClone(text);
     const newSelection = breakLineText(newText, selection.from);
-    setSelectedText(newText);
     updateSelection(newSelection, newText);
+    setText(newText);
     refocus(newText, newSelection);
   };
 
@@ -140,56 +148,33 @@ const RichEditor = () => {
     }
     const newText = structuredClone(text);
     setKerning(newText, delta, selection);
-    setSelectedText(newText);
+    setText(newText);
   };
 
-  // マウスイベント
+  // mouse event
   const onMouseDown = (e: React.MouseEvent) => {
+    if (!wrapperRef.current) {
+      return;
+    }
+    const rect = wrapperRef.current.getBoundingClientRect();
     const mousePoint: Point = {
-      x: e.clientX - origin.x,
-      y: e.clientY - origin.y,
+      x: e.clientX - rect.x,
+      y: e.clientY - rect.y,
     };
 
-    // テキストを選択
-    let selected = false;
-    let edits = false;
-    for (const { box, id } of boundingBoxToId) {
-      if (rectContainsPoint(box, mousePoint)) {
-        setSelectedObjId(id);
-        edits =
-          (selectedObjId === id && action === "edit") ||
-          (action === "move" &&
-            mouseDownTime !== undefined &&
-            Date.now() - mouseDownTime < 500);
-        setAction(edits ? "edit" : "move");
-        selected = true;
-        break;
-      }
+    // clear all selection
+    if (
+      (selection && isAllSelection(selection, text)) ||
+      mouseDownTime === undefined ||
+      Date.now() - mouseDownTime > 500
+    ) {
+      updateSelection(
+        getTextSelection(text, { from: mousePoint, to: mousePoint })
+      );
     }
-    if (!selected) {
-      setSelectedObjId(undefined);
-      setAction(undefined);
-    }
-    if (!edits) {
-      setSelection(undefined);
-    }
-    setInitialText(undefined);
-
-    if (selectedText && (edits || action === "edit")) {
-      // 既に全選択であれば解除
-      if (
-        (selection && isAllSelection(selection, selectedText)) ||
-        mouseDownTime === undefined ||
-        Date.now() - mouseDownTime > 500
-      ) {
-        updateSelection(
-          getTextSelection(selectedText, { from: mousePoint, to: mousePoint })
-        );
-      }
-      // ダブルクリック時にすべて選択
-      else {
-        selectAll();
-      }
+    // double click
+    else {
+      selectAll();
     }
 
     setMouseDownPoint(mousePoint);
@@ -197,34 +182,18 @@ const RichEditor = () => {
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!selectedText) {
+    if (!wrapperRef.current) {
       return;
     }
+    const rect = wrapperRef.current.getBoundingClientRect();
     const mousePoint: Point = {
-      x: e.clientX - origin.x,
-      y: e.clientY - origin.y,
+      x: e.clientX - rect.x,
+      y: e.clientY - rect.y,
     };
 
-    // 移動
-    if (action === "move") {
-      if (!initialText) {
-        setInitialText(selectedText);
-      } else if (mouseDownPoint && initialText) {
-        const diffX = mousePoint.x - mouseDownPoint.x;
-        const diffY = mousePoint.y - mouseDownPoint.y;
-        const newText = structuredClone(selectedText);
-        newText.position = {
-          x: initialText.position.x + diffX,
-          y: initialText.position.y + diffY,
-        };
-        setSelectedText(newText);
-      }
-      return;
-    }
-
-    // 文字の選択
-    if (action === "edit" && mouseDownPoint) {
-      const newSelection = getTextSelection(selectedText, {
+    // select characters
+    if (mouseDownPoint) {
+      const newSelection = getTextSelection(text, {
         from: mouseDownPoint,
         to: mousePoint,
       });
@@ -234,7 +203,6 @@ const RichEditor = () => {
 
   const onMouseUp = () => {
     setMouseDownPoint(undefined);
-    setInitialText(undefined);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -262,28 +230,16 @@ const RichEditor = () => {
 
   // keyboard
   useKey("Backspace", () => {
-    if (inputtingOthers) {
-      return;
-    }
-    if (!selection && selectedObjId) {
-      // オブジェクトの削除
-      deleteObject(selectedObjId);
-    }
     if (inputValue.length === 0 && selection) {
       deleteChars();
     }
   });
 
   useKey("ArrowUp", (e) => {
-    if (
-      inputtingOthers ||
-      inputValue.length > 0 ||
-      !selection ||
-      !selectedText
-    ) {
+    if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = selectedText.writingMode === "vertical";
+    const isVertical = text.writingMode === "vertical";
     if (e.altKey && isVertical) {
       updateKerning(-10);
       e.preventDefault();
@@ -293,22 +249,17 @@ const RichEditor = () => {
       selection,
       isVertical ? "left" : "top",
       e.shiftKey,
-      selectedText
+      text
     );
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
 
   useKey("ArrowDown", (e) => {
-    if (
-      inputtingOthers ||
-      inputValue.length > 0 ||
-      !selection ||
-      !selectedText
-    ) {
+    if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = selectedText.writingMode === "vertical";
+    const isVertical = text.writingMode === "vertical";
     if (e.altKey && isVertical) {
       updateKerning(10);
       e.preventDefault();
@@ -318,22 +269,17 @@ const RichEditor = () => {
       selection,
       isVertical ? "right" : "bottom",
       e.shiftKey,
-      selectedText
+      text
     );
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
 
   useKey("ArrowLeft", (e) => {
-    if (
-      inputtingOthers ||
-      inputValue.length > 0 ||
-      !selection ||
-      !selectedText
-    ) {
+    if (inputValue.length > 0 || !selection) {
       return;
     }
-    const isVertical = selectedText.writingMode === "vertical";
+    const isVertical = text.writingMode === "vertical";
     if (e.altKey && !isVertical) {
       updateKerning(-10);
       e.preventDefault();
@@ -343,22 +289,17 @@ const RichEditor = () => {
       selection,
       isVertical ? "bottom" : "left",
       e.shiftKey,
-      selectedText
+      text
     );
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
 
   useKey("ArrowRight", (e) => {
-    if (
-      inputtingOthers ||
-      inputValue.length > 0 ||
-      !selection ||
-      !selectedText
-    ) {
+    if (inputValue.length > 0 || !selection || !text) {
       return;
     }
-    const isVertical = selectedText.writingMode === "vertical";
+    const isVertical = text.writingMode === "vertical";
     if (e.altKey && !isVertical) {
       updateKerning(10);
       e.preventDefault();
@@ -368,47 +309,37 @@ const RichEditor = () => {
       selection,
       isVertical ? "top" : "right",
       e.shiftKey,
-      selectedText
+      text
     );
     updateSelection(newSelection);
     refocus(undefined, newSelection);
   });
 
   useKey("Enter", (e) => {
-    if (!inputtingOthers && selection && !e.isComposing) {
+    if (selection && !e.isComposing) {
       breakLine();
     }
   });
 
-  useKey("Tab", (e) => {
-    if (!inputtingOthers && selection && !e.isComposing) {
-      const result = addChars("\t");
-    }
-  });*/
-
   return (
     <>
       <Wrapper
-      //onMouseDown={onMouseDown}
-      //onMouseMove={onMouseMove}
-      //onMouseUp={onMouseUp}
+        ref={wrapperRef}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
       >
         <InputWrapper position={inputPoint}>
           <Input
             value={inputValue}
             ref={inputRef}
-            //onFocus={onFocus}
+            onFocus={onFocus}
             onChange={(e) => setInputValue(e.currentTarget.value)}
-            //onKeyUp={onKeyUp}
-            //onCompositionEnd={onCompositionEnd}
+            onKeyUp={onKeyUp}
+            onCompositionEnd={onCompositionEnd}
           />
         </InputWrapper>
-        <DrawTextSvg
-          text={text}
-          origin={origin}
-          size={windowSize}
-          selection={selection}
-        />
+        <DrawTextSvg text={text} size={windowSize} selection={selection} />
       </Wrapper>
     </>
   );

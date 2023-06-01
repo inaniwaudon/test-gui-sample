@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { PathCommand } from "opentype.js";
 import styled from "styled-components";
 import {
@@ -6,14 +6,14 @@ import {
   circleContainsPoint,
   getDistance,
   rectContainsPoint,
-} from "../lib/figure";
+} from "@/lib/figure";
 import {
   commandsToPathD,
   PointType,
   rescaleCommands,
   scaleCommands,
-} from "../lib/bezier";
-import { useWindowSize } from "../lib/useWindowSize";
+} from "@/lib/bezier";
+import { useWindowSize } from "@/lib/useWindowSize";
 
 const Path = styled.path<{ editing: boolean }>`
   fill: ${({ editing }) => (editing ? "none" : "#000")};

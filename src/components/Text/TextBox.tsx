@@ -1,11 +1,13 @@
-import React from "react";
 import styled from "styled-components";
 import TextLine from "./TextLine";
-import { keyColor } from "../const/styles";
-import { Point, Range } from "../lib/figure";
-import { TextIndex } from "../lib/selection";
-import { TextObj } from "../lib/text";
-import { calculateLineRects, calculateTextBoundingBox } from "../lib/typeset";
+import { keyColor } from "@/const/styles";
+import { Range } from "@/lib/figure";
+import { TextIndex } from "@/lib/text/selection";
+import { TextObj } from "@/lib/text/text";
+import {
+  calculateLineRects,
+  calculateTextBoundingBox,
+} from "@/lib/text/typeset";
 
 const Bounding = styled.rect`
   fill: none;

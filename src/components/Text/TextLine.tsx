@@ -1,16 +1,15 @@
-import React from "react";
 import styled, { css, keyframes } from "styled-components";
-import { selectionColor, symbolOffset } from "../const/styles";
-import { Range, Rect } from "../lib/figure";
+import { selectionColor } from "@/const/styles";
+import { Range, Rect } from "@/lib/figure";
 import {
   isAfterTextIndex,
   isBeforeTextIndex,
   isCollapsedSelection,
   sortSelection,
   TextIndex,
-} from "../lib/selection";
-import { Line } from "../lib/text";
-import { calculateItemRects } from "../lib/typeset";
+} from "@/lib/text/selection";
+import { Line } from "@/lib/text/text";
+import { calculateItemRects } from "@/lib/text/typeset";
 
 const CursorFlicker = keyframes`
   0% {
@@ -133,8 +132,8 @@ const TextLine = ({
     <>
       {selection && selectionRect && (
         <Selection
-          x={selectionRect.x + symbolOffset}
-          y={selectionRect.y + symbolOffset}
+          x={selectionRect.x}
+          y={selectionRect.y}
           width={selectionRect.w}
           height={selectionRect.h}
           isCursor={isCollapsedSelection(selection)}
