@@ -2,7 +2,8 @@
 
 GUI の実装サンプル
 
-動くデモ：https://test-gui-sample.pages.dev/
+- 動くデモ：https://test-gui-sample.pages.dev/
+- 発表資料：https://speakerdeck.com/inaniwaudon/until-0601-2
 
 ## bbox
 
